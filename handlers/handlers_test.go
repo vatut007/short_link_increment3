@@ -12,10 +12,13 @@ import (
 
 func strPtr(s string) *string { return &s }
 
-func testRequest(t *testing.T, ts *httptest.Server, method,
-	path string) (*http.Response, string) {
+func testRequest(t *testing.T, ts *httptest.Server, method string,
+	path string, contentType *string) (*http.Response, string) {
 	req, err := http.NewRequest(method, ts.URL+path, nil)
 	require.NoError(t, err)
+	if contentType {
+		req.Header.Set("Content-Type", contentType)
+	}
 
 	resp, err := ts.Client().Do(req)
 	require.NoError(t, err)
@@ -27,7 +30,8 @@ func testRequest(t *testing.T, ts *httptest.Server, method,
 	return resp, string(respBody)
 }
 func TestRouter(t *testing.T) {
-	ts := httptest.NewServer(Main_router())
+	RegisterHandlers()
+	ts := httptest.NewServer(Main_router)
 	defer ts.Close()
 	type want struct {
 		code        int
@@ -43,7 +47,7 @@ func TestRouter(t *testing.T) {
 		{"/", strPtr("https://www.yandex.ru"), want{201, "text/plain"}, "POST"},
 	}
 	for _, v := range testTable {
-		resp, _ := testRequest(t, ts, "GET", v.url)
+		resp, _ := testRequest(t, ts, v.method, v.url)
 		assert.Equal(t, v.want.code, resp.StatusCode)
 	}
 }
