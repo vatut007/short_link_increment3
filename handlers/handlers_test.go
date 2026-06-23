@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -13,11 +14,12 @@ import (
 func strPtr(s string) *string { return &s }
 
 func testRequest(t *testing.T, ts *httptest.Server, method string,
-	path string, contentType *string) (*http.Response, string) {
-	req, err := http.NewRequest(method, ts.URL+path, nil)
+	path string, contentType *string, body string) (*http.Response, string) {
+	url_body := strings.NewReader(body)
+	req, err := http.NewRequest(method, ts.URL+path, url_body)
 	require.NoError(t, err)
-	if contentType {
-		req.Header.Set("Content-Type", contentType)
+	if contentType != nil {
+		req.Header.Set("Content-Type", *contentType)
 	}
 
 	resp, err := ts.Client().Do(req)
@@ -47,7 +49,7 @@ func TestRouter(t *testing.T) {
 		{"/", strPtr("https://www.yandex.ru"), want{201, "text/plain"}, "POST"},
 	}
 	for _, v := range testTable {
-		resp, _ := testRequest(t, ts, v.method, v.url)
+		resp, _ := testRequest(t, ts, v.method, v.url, &v.want.contentType, *v.body)
 		assert.Equal(t, v.want.code, resp.StatusCode)
 	}
 }
