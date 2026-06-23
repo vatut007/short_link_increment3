@@ -1,12 +1,11 @@
 package utils
 
 import (
+	"crypto/sha256"
 	"encoding/base64"
-	"fmt"
 )
 
 func GenerateShortCodeUrl(originalURL string) string {
-	hash := fmt.Sprintf("%x", []byte(originalURL))
-	encoded := base64.RawURLEncoding.EncodeToString([]byte(hash))
-	return encoded[:8]
+	hash := sha256.Sum256([]byte(originalURL))
+	return base64.RawURLEncoding.EncodeToString(hash[:])[:8]
 }

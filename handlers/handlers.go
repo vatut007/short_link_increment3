@@ -3,15 +3,13 @@ package handlers
 import (
 	"io"
 	"net/http"
+	"net/url"
 	"shortener/store"
 	"shortener/utils"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
-
-type ShortenRequest struct {
-}
 
 func createShorten(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
@@ -28,6 +26,10 @@ func createShorten(w http.ResponseWriter, r *http.Request) {
 	originalURL := string(bodyBytes)
 	if strings.TrimSpace(originalURL) == "" {
 		http.Error(w, "Url is empty", http.StatusBadRequest)
+		return
+	}
+	if _, err := url.ParseRequestURI(originalURL); err != nil {
+		http.Error(w, "invalid url", http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("content-type", "text/plain")
@@ -48,16 +50,4 @@ func getShorten(w http.ResponseWriter, r *http.Request) {
 	}
 	originalUrl := val.(string)
 	http.Redirect(w, r, originalUrl, http.StatusTemporaryRedirect)
-}
-
-func ShortLinkHandler(w http.ResponseWriter, r *http.Request) {
-
-	switch r.Method {
-	case http.MethodGet:
-		getShorten(w, r)
-	case http.MethodPost:
-		createShorten(w, r)
-	default:
-		http.Error(w, "Method not allowed", http.StatusBadRequest)
-	}
 }

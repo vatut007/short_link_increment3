@@ -30,7 +30,7 @@ func testRequest(t *testing.T, ts *httptest.Server, method string,
 		req.Header.Set("Content-Type", *contentType)
 	}
 
-	resp, err := ts.Client().Do(req)
+	resp, err := client.Do(req)
 	require.NoError(t, err)
 	defer resp.Body.Close()
 
