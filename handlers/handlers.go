@@ -4,6 +4,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"shortener/cmd/shortener/config"
 	"shortener/store"
 	"shortener/utils"
 	"strings"
@@ -12,7 +13,6 @@ import (
 )
 
 func createShorten(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
 	if r.Header.Get("Content-Type") != "text/plain" {
 		http.Error(w, "Content type must be text/plain", http.StatusUnsupportedMediaType)
 		return
@@ -22,32 +22,29 @@ func createShorten(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error reading request body", http.StatusBadRequest)
 		return
 	}
-	domain := r.Host
 	originalURL := string(bodyBytes)
 	if strings.TrimSpace(originalURL) == "" {
 		http.Error(w, "Url is empty", http.StatusBadRequest)
 		return
 	}
 	if _, err := url.ParseRequestURI(originalURL); err != nil {
-		http.Error(w, "invalid url", http.StatusBadRequest)
+		http.Error(w, "Invalid url", http.StatusBadRequest)
 		return
 	}
-	w.Header().Set("content-type", "text/plain")
 	code := utils.GenerateShortCodeUrl(originalURL)
-	url := "http://" + domain + "/" + code
+	shortURL := config.ConfigApp.BaseURL + "/" + code
 	store.Store.Store(code, originalURL)
+	w.Header().Set("Content-Type", "text/plain")
 	w.WriteHeader(http.StatusCreated)
-	w.Write([]byte(url))
+	w.Write([]byte(shortURL))
 }
 
 func getShorten(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("content-type", "text/plain")
 	code := chi.URLParam(r, "short_code")
 	val, exists := store.Store.Load(code)
 	if !exists {
-		http.Error(w, "Short url not found", http.StatusBadRequest)
+		http.Error(w, "Short url not found", http.StatusNotFound)
 		return
 	}
-	originalUrl := val.(string)
-	http.Redirect(w, r, originalUrl, http.StatusTemporaryRedirect)
+	http.Redirect(w, r, val.(string), http.StatusTemporaryRedirect)
 }

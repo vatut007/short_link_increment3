@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"shortener/cmd/shortener/config"
@@ -9,8 +8,9 @@ import (
 )
 
 func main() {
+	config.ParseFlags()
 	handlers.RegisterHandlers()
-	if err := http.ListenAndServe(fmt.Sprintf(":%d", config.ConfigApp.Port), handlers.Main_router); err != nil {
+	if err := http.ListenAndServe(config.ConfigApp.ServerAddress, handlers.Main_router); err != nil {
 		log.Fatal(err)
 	}
 }

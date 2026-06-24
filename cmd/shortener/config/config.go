@@ -1,11 +1,8 @@
 package config
 
 type Config struct {
-	Port    int
-	Address string
+	ServerAddress string
+	BaseURL       string
 }
 
-var ConfigApp = Config{
-	Port:    flagRunPort,
-	Address: flagRunAddr,
-}
+var ConfigApp Config
